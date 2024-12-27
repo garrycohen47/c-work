@@ -1,112 +1,228 @@
 #ifndef POINT_H_
 #define POINT_H_
 
-template <typename T> concept Integral_Like = std::is_integral_v<T>;
-template <typename T> concept Float_Like = std::is_floating_point_v<T>;
-template <typename T> concept Numeric_Like = Integral_Like<T> || Float_Like<T>;
+#include <utility>
 
 namespace localstd
 {
-	template <Numeric_Like T>
-	struct point
-	{
-		using value_type = T;
+    template<typename T>
+        requires std::integral<T> || std::floating_point<T>
+    struct point {
+        using value_type = T;
 
-		constexpr point() : x(T()), y(T()), z(T())
-		{
-		}
+        constexpr explicit point(
+            T x = T(),
+            T y = T(),
+            T z = T()) noexcept :
+            x_v(x),
+            y_v(y),
+            z_v(z) {}
 
-		constexpr point(T x_val, T y_val, T z_val) : x(x_val), y(y_val), z(z_val)
-		{
-		}
+        constexpr point(const point& p) noexcept = default;
 
-		constexpr point(const point&) = default;
+        constexpr auto operator<=>(const point&) const = default;
 
-		template <Numeric_Like U>
-		constexpr point(const point<U>& p) : x(p.x), y(p.y), z(p.z)
-		{
-		}
 
-		constexpr point& operator=(const point&) = default;
+        // Need to duplicate until deducing this is available
+        template<size_t I>
+        auto& get() {
+            static_assert(I <= std::tuple_size_v<point>);
 
-		template <Integral_Like U>
-		constexpr auto operator+(const point<U>& p) const noexcept -> point
-		{
-			return point(x + p.x, y + p.y, z + p.z);
-		}
+            if constexpr (I == 0) {
+                return x_v;
+            }
 
-		template <Float_Like U>
-		constexpr auto operator+(const point<U>& p) const noexcept -> point<U>
-		{
-			return point(x + p.x, y + p.y, z + p.z);
-		}
+            if constexpr (I == 1) {
+                return y_v;
+            }
 
-		template <Integral_Like U>
-		constexpr auto operator-(const point<U>& p) const noexcept -> point
-		{
-			return point(x - p.x, y - p.y, z - p.z);
-		}
+            if constexpr (I == 2) {
+                return z_v;
+            }
+        }
 
-		template <Float_Like U>
-		constexpr auto operator-(const point<U>& p) const noexcept -> point<U>
-		{
-			return point(x - p.x, y - p.y, z - p.z);
-		}
+        template<size_t I>
+        const auto& get() const {
+            static_assert(I <= std::tuple_size_v<point>);
 
-		constexpr auto operator-() const noexcept -> point
-		{
-			return {-x, -y, -z};
-		}
+            if constexpr (I == 0) {
+                return x_v;
+            }
 
-		constexpr auto operator*(Integral_Like auto scale) const noexcept
-		{
-			return point(x * scale, y * scale, z * scale);
-		}
+            if constexpr (I == 1) {
+                return y_v;
+            }
 
-		constexpr auto operator*(Float_Like auto scale) const noexcept -> point<decltype(scale)>
-		{
-			return {x * scale, y * scale, z * scale};
-		}
+            if constexpr (I == 2) {
+                return z_v;
+            }
+        }
 
-		explicit operator std::string() const
-		{
-			return "(" + std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z) + ")";
-		}
+        [[nodiscard]]
+        constexpr auto x() const noexcept {
+            return x_v;
+        }
 
-		value_type x;
-		value_type y;
-		value_type z;
-	};
+        [[nodiscard]]
+        constexpr auto y() const noexcept {
+            return y_v;
+        }
+
+        [[nodiscard]]
+        constexpr auto z() const noexcept {
+            return z_v;
+        }
+
+        template<typename CharT, typename Traits = std::char_traits<CharT>>
+        friend std::basic_ostream<CharT, Traits>& operator<<(
+            std::basic_ostream<CharT, Traits>& os,
+            const point& p) noexcept {
+            os << '(' << p.x() << ',' << ' ' << p.y() << ',' << ' ' << p.z() << ')';
+            return os;
+        }
+
+    private:
+        value_type x_v;
+        value_type y_v;
+        value_type z_v;
+    };
+
+    template<std::integral U, typename T>
+    constexpr auto operator+(
+        const point<T>& lhs,
+        const point<U>& rhs) noexcept
+        -> point<T> {
+        return point<T>(
+            lhs.x() + rhs.x(),
+            lhs.y() + rhs.y(),
+            lhs.z() + rhs.z());
+    }
+
+    template<std::floating_point U, typename T>
+    constexpr auto operator+(
+        const point<T>& lhs,
+        const point<U>& rhs) noexcept
+        -> point<U> {
+        return point<U>(
+            lhs.x() + rhs.x(),
+            lhs.y() + rhs.y(),
+            lhs.z() + rhs.z());
+    }
+
+    template<std::integral U, typename T>
+    constexpr auto operator-(
+        const point<T>& lhs,
+        const point<U>& rhs) noexcept
+        -> point<std::make_signed_t<U>> {
+        return point<std::make_signed_t<U>>(
+            lhs.x() - rhs.x(),
+            lhs.y() - rhs.y(),
+            lhs.z() - rhs.z());
+    }
+
+    template<std::integral U, std::floating_point T>
+    constexpr auto operator-(
+        const point<T>& lhs,
+        const point<U>& rhs) noexcept
+        -> point<T> {
+        return point<T>(
+            lhs.x() - rhs.x(),
+            lhs.y() - rhs.y(),
+            lhs.z() - rhs.z());
+    }
+
+    template<std::floating_point U, typename T>
+    constexpr auto operator-(
+        const point<T>& lhs,
+        const point<U>& rhs) noexcept
+        -> point<U> {
+        return point<U>(
+            lhs.x() - rhs.x(),
+            lhs.y() - rhs.y(),
+            lhs.z() - rhs.z());
+    }
+
+    template<std::integral U, typename T>
+    constexpr auto operator*(
+        const point<T>& lhs,
+        U scale) noexcept
+        -> point<T> {
+        return point<T>(
+            lhs.x() * scale,
+            lhs.y() * scale,
+            lhs.z() * scale);
+    }
+
+    template<std::floating_point U, typename T>
+    constexpr auto operator*(
+        const point<T>& lhs,
+        U scale) noexcept
+        -> point<U> {
+        return point<U>(
+            lhs.x() * scale,
+            lhs.y() * scale,
+            lhs.z() * scale);
+    }
+
+    template<std::integral U>
+    constexpr auto operator+(
+        const point<U>& p) noexcept
+        -> point<std::make_unsigned_t<U>> {
+        using S = std::make_unsigned_t<U>;
+        return point<S>(
+            +S(p.x()),
+            +S(p.y()),
+            +S(p.z()));
+    }
+
+    template<std::integral U>
+    constexpr auto operator-(
+        const point<U>& p) noexcept
+        -> point<std::make_signed_t<U>> {
+        using S = std::make_signed_t<U>;
+        return point<S>(
+            -S(p.x()),
+            -S(p.y()),
+            -S(p.z()));
+    }
 }
 
-constexpr auto operator "" _x(unsigned long long int val) -> localstd::point<int>
-{
-	return {static_cast<int>(val), 0, 0};
+template<typename T>
+struct std::tuple_size<::localstd::point<T>> :
+    std::integral_constant<size_t, 3> {};
+
+template<size_t Index, typename T>
+struct std::tuple_element<Index, ::localstd::point<T>> :
+    std::tuple_element<Index, std::tuple<T, T, T>> {};
+
+constexpr auto operator""_x(unsigned long long int x) noexcept {
+    using S = unsigned long long int;
+    return ::localstd::point<S>(static_cast<S>(x), 0, 0);
 }
 
-constexpr auto operator "" _x(long double val) -> localstd::point<double>
-{
-	return {static_cast<double>(val), 0, 0};
+constexpr auto operator""_x(long double x) noexcept {
+    using S = long double;
+    return ::localstd::point<S>(static_cast<S>(x), 0, 0);
 }
 
-constexpr auto operator "" _y(unsigned long long int val) -> localstd::point<int>
-{
-	return {0, static_cast<int>(val), 0};
+constexpr auto operator""_y(unsigned long long int y) noexcept {
+    using S = unsigned long long int;
+    return ::localstd::point<S>(0, static_cast<S>(y), 0);
 }
 
-constexpr auto operator "" _y(long double val) -> localstd::point<double>
-{
-	return {0, static_cast<double>(val), 0};
+constexpr auto operator""_y(long double y) noexcept {
+    using S = long double;
+    return ::localstd::point<S>(0, static_cast<S>(y), 0);
 }
 
-constexpr auto operator "" _z(unsigned long long int val) -> localstd::point<int>
-{
-	return {0, 0, static_cast<int>(val)};
+constexpr auto operator""_z(unsigned long long int z) noexcept {
+    using S = unsigned long long int;
+    return ::localstd::point<S>(0, 0, static_cast<S>(z));
 }
 
-constexpr auto operator "" _z(long double val) -> localstd::point<double>
-{
-	return {0, 0, static_cast<double>(val)};
+constexpr auto operator""_z(long double z) noexcept {
+    using S = long double;
+    return ::localstd::point<S>(0, 0, static_cast<S>(z));
 }
 
 #endif

@@ -1,15 +1,15 @@
 // TEST FILE
 
+#include "split.h"
 #include <gtest/gtest.h>
 #include <list>
-#include "split.h"
 
 using namespace localstd;
 
 TEST(split_tests, splits_list)
 {
-	std::vector<int> temp_vec {0, 1, 2, 3, 4, 0, 1, 2, 0, 5, 4};
-	std::vector<std::vector<int>> expected_out_vector {
+	const std::vector temp_vec{0, 1, 2, 3, 4, 0, 1, 2, 0, 5, 4};
+	const std::vector<std::vector<int>> expected_out_vector{
 		{},
 		{1, 2, 3, 4},
 		{1, 2},
@@ -31,8 +31,8 @@ TEST(split_tests, splits_list)
 
 TEST(split_tests, splits_weird_lists)
 {
-	std::list<char> in_list {'A', 'B', 'A', 'E', 'A', 'A'};
-	std::vector<std::string> expected_out_list {
+	const std::list in_list{'A', 'B', 'A', 'E', 'A', 'A'};
+	const std::vector<std::string> expected_out_list{
 		{},
 		{'B'},
 		{'E'},
@@ -54,12 +54,9 @@ TEST(split_tests, splits_weird_lists)
 	EXPECT_EQ(expected_out_list, out_list);
 }
 
-TEST(split_tests, splits_empty_list)
-{
-	std::list<int> in_list {};
-	std::vector<std::vector<int>> expected_out_list {
-		{}
-	};
+TEST(split_tests, splits_empty_list) {
+	const std::list<int> in_list{};
+	const std::vector<std::vector<int>> expected_out_list{{}};
 
 	std::vector<std::vector<int>> out_list;
 
@@ -75,14 +72,16 @@ TEST(split_tests, splits_empty_list)
 	EXPECT_EQ(expected_out_list, out_list);
 }
 
-TEST(split_tests, splits_list_front_inserter)
-{
-	std::string_view in_list {"Fart in my arse"};
+TEST(split_tests, splits_list_front_inserter) {
+	using namespace std::literals;
+	constexpr std::string_view in_list{"Sandwhich Whale Cartesian"};
 
-	std::list<std::string_view> expected_out_list {
-		{"rse"},
-		{"rt in my "},
-		{"F"},
+	const std::list expected_out_list{
+		"n"sv,
+		"rtesi"sv,
+		"le C"sv,
+		"ndwhich Wh"sv,
+		"S"sv,
 	};
 
 	std::list<std::string_view> out_list;
@@ -97,4 +96,29 @@ TEST(split_tests, splits_list_front_inserter)
 	);
 
 	EXPECT_EQ(expected_out_list, out_list);
+}
+
+TEST(split_tests, constexpr_test) {
+	using namespace std::literals;
+	constexpr auto temp_view = "Howdy pardnur, I'm a big cowpoke."sv;
+	constexpr std::array expected_values{
+		"Howdy"sv,
+		"pardnur,"sv,
+		"I'm"sv,
+		"a"sv,
+		"big"sv,
+		"cowpoke."sv
+	};
+
+	std::array<std::string_view, 6> out_arr{};
+
+	split(
+		temp_view.cbegin(),
+		temp_view.cend(),
+		out_arr.begin(),
+		[](const auto val) {
+			return val == ' ';
+		});
+
+	EXPECT_EQ(out_arr, expected_values);
 }

@@ -4,52 +4,47 @@
 #include <concepts>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 
 namespace fs = std::filesystem;
 
 namespace localstd
 {
-	template <typename Iterator>
-	bool save(const fs::path& file, Iterator first, Iterator last)
-	{
-		fs::create_directories(file.parent_path());
+    namespace detail {
+        auto save_stream(std::ofstream& s, auto first, auto last) {
+            std::for_each(first, last, [&s](const auto& i) {
+                s << i;
+            });
+        }
 
-		constexpr auto settings = std::ios_base::out | std::ios_base::binary | std::ios_base::trunc;
-		std::ofstream stream(file, settings);
+        auto save_stream(
+            std::ofstream& s,
+            std::contiguous_iterator auto first,
+            std::contiguous_iterator auto last) {
+            s.write(
+                static_cast<char*>(std::to_address(first)),
+                static_cast<std::streamsize>(std::distance(first, last)));
+        }
+    } // namespace detail
 
-		if (!stream)
-		{
-			return false;
-		}
+    auto save(const fs::path& file, auto first, auto last) noexcept {
+        fs::create_directories(file.parent_path());
 
-		std::for_each(
-			first, last, [&stream](const auto& val)
-			{
-				stream << val;
-			}
-		);
+        constexpr auto settings = std::ios_base::out | std::ios_base::binary | std::ios_base::trunc;
+        std::ofstream stream(file, settings);
 
-		return true;
-	}
+        if (!stream) {
+            return false;
+        }
 
-	template <typename Container>
-	bool save(const fs::path& file, const Container& cont)
-	{
-		// TODO: Have this be an overload for contiguous data
-		return false;
-	}
+        detail::save_stream(stream, first, last);
 
-	template <typename Iterator>
-	Iterator read(const fs::path& path, Iterator out)
-	{
-		constexpr auto settings = std::ios_base::in | std::ios_base::binary;
-		std::ifstream stream(path, settings);
+        return true;
+    }
 
-		// TODO: Decide how to implement Output Iterators for this function
-		// How would this work out?
-
-		return out;
-	}
-}// namespace localstd
+    auto read(const fs::path& file, auto out) noexcept {
+        // TODO:
+    }
+} // namespace localstd
 
 #endif
