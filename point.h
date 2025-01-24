@@ -2,7 +2,7 @@
 #define POINT_H_
 
 #include <utility>
-#include <__type_traits/is_nothrow_convertible.h>
+#include <type_traits>
 
 namespace localstd {
     template<typename T>
