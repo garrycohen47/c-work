@@ -21,6 +21,7 @@ static_assert(std::is_same_v<decltype(test_003)::type, double>);
 
 static_assert(+(-5_xi) == -5_xi);
 static_assert(-(-5_xi) == 5_xi);
+static_assert(+(test_001) == test_001);
 
 TEST(point_tests, structured_binding_simple) {
     constexpr auto test_point = point<int>{1, 2, -3};

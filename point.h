@@ -138,7 +138,7 @@ namespace localstd {
             return _z;
         }
 
-        // Should work with std::ostream and std::wostream's
+        // Should work with std::ostream and std::wostream
         template<typename CharT, typename Traits = std::char_traits<CharT>>
         friend auto operator<<(
             std::basic_ostream<CharT, Traits>& os,

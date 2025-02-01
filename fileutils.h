@@ -37,10 +37,10 @@ namespace localstd
     auto save(
         const fs::path& file,
         std::input_iterator auto first,
-        std::input_iterator auto last) noexcept {
+        std::input_iterator auto last,
+        const std::ios::openmode settings) noexcept {
         fs::create_directories(file.parent_path());
 
-        constexpr auto settings = std::ios_base::out | std::ios_base::binary | std::ios_base::trunc;
         std::ofstream stream(
             file,
             settings);
