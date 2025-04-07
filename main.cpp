@@ -25,7 +25,19 @@
 
 using namespace localstd;
 
+using namespace std::literals;
+
 int main() {
-    constexpr auto x = u16{1} + u16{1};
-    // TODO:
+    constexpr auto x = (u16{1} + u16{1}) * u16{2};
+
+    constexpr auto p = point{1, 2, 3};
+
+    const auto& [a, b, c] = p;
+
+    std::println("{}, {}, {}", a, b, c);
+
+    std::cout << p << std::endl;
+    std::println("{}", p);
+    std::println("{}", point{3, 4, 5});
+    std::println("{}", x);
 }

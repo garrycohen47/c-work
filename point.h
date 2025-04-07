@@ -3,6 +3,8 @@
 
 #include <utility>
 #include <type_traits>
+#include <string>
+#include <format>
 
 namespace localstd {
     template<typename T>
@@ -65,7 +67,7 @@ namespace localstd {
         constexpr auto operator*(
             const U scale) const
             noexcept
-            -> point<T> {
+            -> point {
             return point(
                 _x * scale,
                 _y * scale,
@@ -92,14 +94,12 @@ namespace localstd {
 
             if constexpr (I == 0) {
                 return _x;
-            }
-
-            if constexpr (I == 1) {
+            } else if constexpr (I == 1) {
                 return _y;
-            }
-
-            if constexpr (I == 2) {
+            } else if constexpr (I == 2) {
                 return _z;
+            } else {
+                static_assert(false);
             }
         }
 
@@ -149,12 +149,10 @@ namespace localstd {
             constexpr auto space = CharT{' '};
             constexpr auto end = CharT{')'};
 
-            os << start
-                << p.x() << comma << space
-                << p.y() << comma << space
-                << p.z() << end;
-
-            return os;
+            return os << start
+                   << p.x() << comma << space
+                   << p.y() << comma << space
+                   << p.z() << end;
         }
 
     private:
@@ -166,7 +164,17 @@ namespace localstd {
 
 template<typename T>
 struct std::formatter<::localstd::point<T>> {
-    // TODO: work for std::format functionality
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(
+        const ::localstd::point<T>& p,
+        FormatContext& ctx) const {
+        return std::format_to(ctx.out(), "({}, {}, {})", p.x(), p.y(), p.z());
+    }
 };
 
 template<typename T>

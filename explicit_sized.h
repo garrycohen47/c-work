@@ -2,6 +2,8 @@
 #define EXPLICIT_SIZED_H
 
 #include <cstdint>
+#include <cstddef>
+#include <type_traits>
 
 namespace localstd::detail {
 #if DEBUG_ENABLED == 1
@@ -148,5 +150,27 @@ namespace localstd {
     using i32 = explicit_sized<int32_t>;
     using isize = explicit_sized<intmax_t>;
 }
+
+template<typename T>
+struct std::formatter<::localstd::explicit_sized<T>> {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(
+        const ::localstd::explicit_sized<T>& t,
+        FormatContext& ctx) const {
+        using namespace ::localstd;
+        using to = std::conditional_t<std::is_unsigned_v<T>, usize::value_type, isize::value_type>;
+
+        return std::format_to(
+            ctx.out(),
+            "{}",
+            static_cast<to>(static_cast<T>(t)));
+    }
+};
+
 
 #endif
