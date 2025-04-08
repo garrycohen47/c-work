@@ -29,24 +29,15 @@ namespace localstd {
             const explicit_sized&) const
             noexcept = default;
 
-        [[nodiscard]]
-        constexpr auto operator|(
-            const explicit_sized& other) const
-            noexcept
-            -> explicit_sized {
-            return explicit_sized{v | other.v};
-        }
-
-        [[nodiscard]]
-        constexpr auto operator&(
-            const explicit_sized& other) const
-            noexcept
-            -> explicit_sized {
-            return explicit_sized{v & other.v};
-        }
-
         constexpr explicit operator value_type() const noexcept {
             return v;
+        }
+
+        template<typename U>
+            requires (std::is_signed_v<T> && std::is_signed_v<U>) ||
+                     (std::is_unsigned_v<T> && std::is_unsigned_v<U>)
+        constexpr explicit operator explicit_sized<U>() const noexcept {
+            return explicit_sized<U>{static_cast<U>(v)};
         }
 
     private:
@@ -54,7 +45,24 @@ namespace localstd {
     };
 
     template<typename T>
-    using explicit_sized_v = typename explicit_sized<T>::value_type;
+    [[nodiscard]]
+    constexpr auto operator|(
+        const explicit_sized<T>& lhs,
+        const explicit_sized<T>& rhs)
+        noexcept
+        -> explicit_sized<T> {
+        return explicit_sized<T>{static_cast<T>(static_cast<T>(lhs) | static_cast<T>(rhs))};
+    }
+
+    template<typename T>
+    [[nodiscard]]
+    constexpr auto operator&(
+        const explicit_sized<T>& lhs,
+        const explicit_sized<T>& rhs)
+        noexcept
+        -> explicit_sized<T> {
+        return explicit_sized<T>{static_cast<T>(static_cast<T>(lhs) & static_cast<T>(rhs))};
+    }
 
     template<typename T>
         requires std::is_unsigned_v<T>
@@ -67,7 +75,7 @@ namespace localstd {
             // TODO: Debug specific flag, bounds checking should be performed
         }
 
-        return explicit_sized<T>(static_cast<T>(lhs) + static_cast<T>(rhs));
+        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) + static_cast<T>(rhs)));
     }
 
     template<typename T>
@@ -81,7 +89,7 @@ namespace localstd {
             // TODO: Debug specific flag, bounds checking should be performed
         }
 
-        return explicit_sized<T>(static_cast<T>(lhs) + static_cast<T>(rhs));
+        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) + static_cast<T>(rhs)));
     }
 
     template<typename T>
@@ -95,7 +103,7 @@ namespace localstd {
             // TODO: Debug specific flag, bounds checking should be performed
         }
 
-        return explicit_sized<T>(static_cast<T>(lhs) - static_cast<T>(rhs));
+        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) - static_cast<T>(rhs)));
     }
 
     template<typename T>
@@ -109,7 +117,7 @@ namespace localstd {
             // TODO: Debug specific flag, bounds checking should be performed
         }
 
-        return explicit_sized<T>(static_cast<T>(lhs) - static_cast<T>(rhs));
+        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) - static_cast<T>(rhs)));
     }
 
     template<typename T>
@@ -123,7 +131,7 @@ namespace localstd {
             // TODO: Debug specific flag, bounds checking should be performed
         }
 
-        return explicit_sized<T>(static_cast<T>(lhs) * static_cast<T>(rhs));
+        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) * static_cast<T>(rhs)));
     }
 
     template<typename T>
@@ -137,18 +145,18 @@ namespace localstd {
             // TODO: Debug specific flag, bounds checking should be performed
         }
 
-        return explicit_sized<T>(static_cast<T>(lhs) * static_cast<T>(rhs));
+        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) * static_cast<T>(rhs)));
     }
 
     using u8 = explicit_sized<uint8_t>;
     using u16 = explicit_sized<uint16_t>;
     using u32 = explicit_sized<uint32_t>;
-    using usize = explicit_sized<uintmax_t>;
+    using u64 = explicit_sized<uint64_t>;
 
     using i8 = explicit_sized<int8_t>;
     using i16 = explicit_sized<int16_t>;
     using i32 = explicit_sized<int32_t>;
-    using isize = explicit_sized<intmax_t>;
+    using i64 = explicit_sized<int64_t>;
 }
 
 template<typename T>
@@ -162,13 +170,10 @@ struct std::formatter<::localstd::explicit_sized<T>> {
     auto format(
         const ::localstd::explicit_sized<T>& t,
         FormatContext& ctx) const {
-        using namespace ::localstd;
-        using to = std::conditional_t<std::is_unsigned_v<T>, usize::value_type, isize::value_type>;
-
         return std::format_to(
             ctx.out(),
             "{}",
-            static_cast<to>(static_cast<T>(t)));
+            static_cast<T>(t));
     }
 };
 

@@ -28,7 +28,8 @@ using namespace localstd;
 using namespace std::literals;
 
 int main() {
-    constexpr auto x = (u16{1} + u16{1}) * u16{2};
+    constexpr auto x = (u8{1} + u8{1}) * u8{2};
+    std::println("{}", x);
 
     constexpr auto p = point{1, 2, 3};
 
@@ -39,5 +40,13 @@ int main() {
     std::cout << p << std::endl;
     std::println("{}", p);
     std::println("{}", point{3, 4, 5});
-    std::println("{}", x);
+
+    constexpr auto v1 = u8{1};
+    constexpr auto v2 = u8{2};
+    std::println("{}", v1 | v2);
+    std::println("{}", v1 & v2);
+
+    std::println("{}", static_cast<u32>(v1));
+    constexpr auto v3 = i8{-2};
+    std::println("{}", static_cast<i32>(v3));
 }
