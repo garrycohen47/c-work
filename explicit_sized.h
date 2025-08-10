@@ -19,9 +19,9 @@ namespace localstd {
         using value_type = std::remove_cvref_t<T>;
 
         constexpr explicit explicit_sized(
-            value_type v)
+            const value_type v)
             noexcept :
-            v(std::move_if_noexcept(v)) {
+            v(v) {
             //
         }
 
@@ -40,6 +40,18 @@ namespace localstd {
             return explicit_sized<U>{static_cast<U>(v)};
         }
 
+        template<typename U>
+            requires (std::is_unsigned_v<T> && std::is_signed_v<U>) ||
+                     (std::is_unsigned_v<U> && std::is_signed_v<T>)
+        constexpr explicit operator explicit_sized<U>()
+            const noexcept(!detail::is_debug) {
+            if constexpr (detail::is_debug) {
+                // TODO:
+            }
+
+            return explicit_sized<U>{static_cast<U>(v)};
+        }
+
     private:
         value_type v;
     };
@@ -47,8 +59,8 @@ namespace localstd {
     template<typename T>
     [[nodiscard]]
     constexpr auto operator|(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
+        const explicit_sized<T> lhs,
+        const explicit_sized<T> rhs)
         noexcept
         -> explicit_sized<T> {
         return explicit_sized<T>{static_cast<T>(static_cast<T>(lhs) | static_cast<T>(rhs))};
@@ -57,19 +69,18 @@ namespace localstd {
     template<typename T>
     [[nodiscard]]
     constexpr auto operator&(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
+        const explicit_sized<T> lhs,
+        const explicit_sized<T> rhs)
         noexcept
         -> explicit_sized<T> {
         return explicit_sized<T>{static_cast<T>(static_cast<T>(lhs) & static_cast<T>(rhs))};
     }
 
     template<typename T>
-        requires std::is_unsigned_v<T>
     [[nodiscard]]
     constexpr auto operator+(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
+        const explicit_sized<T> lhs,
+        const explicit_sized<T> rhs)
         noexcept(!detail::is_debug) {
         if constexpr (detail::is_debug) {
             // TODO: Debug specific flag, bounds checking should be performed
@@ -79,25 +90,10 @@ namespace localstd {
     }
 
     template<typename T>
-        requires std::is_signed_v<T>
-    [[nodiscard]]
-    constexpr auto operator+(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
-        noexcept(!detail::is_debug) {
-        if constexpr (detail::is_debug) {
-            // TODO: Debug specific flag, bounds checking should be performed
-        }
-
-        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) + static_cast<T>(rhs)));
-    }
-
-    template<typename T>
-        requires std::is_unsigned_v<T>
     [[nodiscard]]
     constexpr auto operator-(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
+        const explicit_sized<T> lhs,
+        const explicit_sized<T> rhs)
         noexcept(!detail::is_debug) {
         if constexpr (detail::is_debug) {
             // TODO: Debug specific flag, bounds checking should be performed
@@ -107,39 +103,10 @@ namespace localstd {
     }
 
     template<typename T>
-        requires std::is_signed_v<T>
-    [[nodiscard]]
-    constexpr auto operator-(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
-        noexcept(!detail::is_debug) {
-        if constexpr (detail::is_debug) {
-            // TODO: Debug specific flag, bounds checking should be performed
-        }
-
-        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) - static_cast<T>(rhs)));
-    }
-
-    template<typename T>
-        requires std::is_unsigned_v<T>
     [[nodiscard]]
     constexpr auto operator*(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
-        noexcept(!detail::is_debug) {
-        if constexpr (detail::is_debug) {
-            // TODO: Debug specific flag, bounds checking should be performed
-        }
-
-        return explicit_sized<T>(static_cast<T>(static_cast<T>(lhs) * static_cast<T>(rhs)));
-    }
-
-    template<typename T>
-        requires std::is_signed_v<T>
-    [[nodiscard]]
-    constexpr auto operator*(
-        const explicit_sized<T>& lhs,
-        const explicit_sized<T>& rhs)
+        const explicit_sized<T> lhs,
+        const explicit_sized<T> rhs)
         noexcept(!detail::is_debug) {
         if constexpr (detail::is_debug) {
             // TODO: Debug specific flag, bounds checking should be performed
@@ -168,7 +135,7 @@ struct std::formatter<::localstd::explicit_sized<T>> {
 
     template<typename FormatContext>
     auto format(
-        const ::localstd::explicit_sized<T>& t,
+        const ::localstd::explicit_sized<T> t,
         FormatContext& ctx) const {
         return std::format_to(
             ctx.out(),
@@ -176,6 +143,5 @@ struct std::formatter<::localstd::explicit_sized<T>> {
             static_cast<T>(t));
     }
 };
-
 
 #endif

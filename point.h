@@ -17,9 +17,9 @@ namespace localstd {
             type y = {},
             type z = {})
             noexcept :
-            _x(x),
-            _y(y),
-            _z(z) {
+            _x(std::move(x)),
+            _y(std::move(y)),
+            _z(std::move(z)) {
             //
         }
 

@@ -3,7 +3,15 @@ project(coding_work)
 
 set(CMAKE_CXX_STANDARD 26)
 
-add_executable(coding_work main.cpp)
+add_executable(coding_work
+        main.cpp
+        explicit_sized.h
+        point.h
+        split.h
+        cache.h
+        fileutils.h
+        result.h
+)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -17,8 +25,15 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # Now simply link against gtest or gtest_main as needed. Eg
-add_executable(tests split_test.cpp cache_test.cpp point_test.cpp)
+add_executable(tests
+        split_test.cpp
+        cache_test.cpp
+        point_test.cpp
+        result_test.cpp
+)
+
 target_link_libraries(tests gtest_main)
 add_test(NAME split_tests COMMAND tests)
 add_test(NAME cache_tests COMMAND tests)
 add_test(NAME point_tests COMMAND tests)
+add_test(NAME result_tests COMMAND tests)
