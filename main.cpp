@@ -5,6 +5,7 @@
 #include <list>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <string_view>
 #include <vector>
 #include <chrono>
@@ -14,6 +15,7 @@
 #include <complex>
 #include <print>
 #include <expected>
+#include <random>
 
 #include "cache.h"
 #include "fileutils.h"
@@ -26,8 +28,12 @@ using namespace localstd;
 
 using namespace std::literals;
 
-struct Thing{};
-
 int main() {
-    // TODO:
+    auto test = Result<int, std::string>{1}
+        .map(
+            [](const int) -> std::tuple<> {
+                return {};
+            });
+
+    std::println("{}", test);
 }

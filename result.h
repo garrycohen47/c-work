@@ -22,24 +22,24 @@ namespace localstd {
         using value_type = T;
         using error_type = E;
 
-        Result(T t) noexcept : value(std::move(t)) {}
-        Result(E e) noexcept : value(std::move(e)) {}
+        constexpr Result(T t) noexcept : value(std::move(t)) {}
+        constexpr Result(E e) noexcept : value(std::move(e)) {}
 
         template<typename Self>
         [[nodiscard]]
-        auto is_ok(this Self&& self) noexcept -> bool {
+        constexpr auto is_ok(this Self&& self) noexcept -> bool {
             return std::holds_alternative<T>(std::forward<Self>(self).value);
         }
 
         template<typename Self>
         [[nodiscard]]
-        auto is_err(this Self&& self) noexcept -> bool {
+        constexpr auto is_err(this Self&& self) noexcept -> bool {
             return std::holds_alternative<E>(std::forward<Self>(self).value);
         }
 
         template<typename Self>
         [[nodiscard]]
-        auto ok(this Self&& self) noexcept
+        constexpr auto ok(this Self&& self) noexcept
             -> std::optional<T> {
             if (self.is_err()) {
                 return std::nullopt;
@@ -50,7 +50,7 @@ namespace localstd {
 
         template<typename Self>
         [[nodiscard]]
-        auto ok_ref(this Self&& self) noexcept
+        constexpr auto ok_ref(this Self&& self) noexcept
             -> std::optional<std::reference_wrapper<detail::to_const<Self, T>>> {
             if (self.is_err()) {
                 return std::nullopt;
@@ -61,7 +61,7 @@ namespace localstd {
 
         template<typename Self>
         [[nodiscard]]
-        auto err(this Self&& self) noexcept
+        constexpr auto err(this Self&& self) noexcept
             -> std::optional<E> {
             if (self.is_ok()) {
                 return std::nullopt;
@@ -72,7 +72,7 @@ namespace localstd {
 
         template<typename Self>
         [[nodiscard]]
-        auto err_ref(this Self&& self) noexcept
+        constexpr auto err_ref(this Self&& self) noexcept
             -> std::optional<std::reference_wrapper<detail::to_const<Self, E>>> {
             if (self.is_ok()) {
                 return std::nullopt;
@@ -83,21 +83,28 @@ namespace localstd {
 
         template<typename Self, typename F>
         [[nodiscard]]
-        auto map(this Self&& self, F&& f) noexcept
-            -> Result<typename std::invoke_result_t<F, T>::value_type, E> {
+        constexpr auto map(this Self&& self, F&& f) noexcept
+            -> Result<std::invoke_result_t<F, T>, E> {
             if (self.is_err()) {
                 return std::get<E>(std::forward<Self>(self).value);
             }
 
-            return std::invoke(
-                std::forward<F>(f),
-                std::get<T>(std::forward<Self>(self).value));
+            if constexpr(std::is_void_v<std::invoke_result_t<F, T>>) {
+                std::invoke(
+                    std::forward<F>(f),
+                    std::get<T>(std::forward<Self>(self).value));
+                return {};
+            } else {
+                return std::invoke(
+                    std::forward<F>(f),
+                    std::get<T>(std::forward<Self>(self).value));
+            }
         }
 
         template<typename Self, typename F>
         [[nodiscard]]
-        auto map_err(this Self&& self, F&& f) noexcept
-            -> Result<T, typename std::invoke_result_t<F, E>::error_type> {
+        constexpr auto map_err(this Self&& self, F&& f) noexcept
+            -> Result<T, std::invoke_result_t<F, E>> {
             if (self.is_ok()) {
                 return std::get<T>(std::forward<Self>(self).value);
             }
@@ -109,6 +116,71 @@ namespace localstd {
 
     private:
         std::variant<T, E> value;
+    };
+
+    template<typename E>
+        requires detail::is_not_cvref<E>
+    class Result<void, E> {
+    public:
+        constexpr Result() noexcept : value(std::nullopt) {}
+        constexpr Result(E e) noexcept : value(std::move(e)) {}
+
+        template<typename Self>
+        [[nodiscard]]
+        constexpr auto is_ok(this Self&& self) noexcept -> bool {
+            return !std::forward<Self>(self).value.has_value();
+        }
+
+        template<typename Self>
+        [[nodiscard]]
+        constexpr auto is_err(this Self&& self) noexcept -> bool {
+            return std::forward<Self>(self).value.has_value();
+        }
+
+        template<typename Self>
+        [[nodiscard]]
+        constexpr auto err(this Self&& self) noexcept
+            -> std::optional<E> {
+            return std::forward<Self>(self).value;
+        }
+
+        template<typename Self>
+        [[nodiscard]]
+        constexpr auto err_ref(this Self&& self) noexcept
+            -> std::optional<std::reference_wrapper<detail::to_const<Self, E>>> {
+            if (self.is_ok()) {
+                return std::nullopt;
+            }
+
+            return std::forward<Self>(self).value.value();
+        }
+
+        template<typename Self, typename F>
+        [[nodiscard]]
+        constexpr auto map(this Self&& self, F&& f) noexcept
+            -> Result<std::invoke_result_t<F>, E> {
+            if (self.is_err()) {
+                return std::forward<Self>(self).value.value();
+            }
+
+            return std::invoke(std::forward<F>(f));
+        }
+
+        template<typename Self, typename F>
+        [[nodiscard]]
+        constexpr auto map_err(this Self&& self, F&& f) noexcept
+            -> Result<void, std::invoke_result_t<F, E>> {
+            if (self.is_ok()) {
+                return {};
+            }
+
+            return std::invoke(
+                std::forward<F>(f),
+                std::forward<Self>(self).value.value());
+        }
+
+    private:
+        std::optional<E> value;
     };
 }
 
@@ -123,17 +195,17 @@ struct std::formatter<::localstd::Result<T, E>> {
     auto format(
         const ::localstd::Result<T, E>& value,
         FormatContext& ctx) const {
-        if (value.is_ok()) {
+        if (value.is_err()) {
             return std::format_to(
                 ctx.out(),
                 "{}",
-                *value.ok());
+                value.err().value());
         }
 
         return std::format_to(
             ctx.out(),
             "{}",
-            *value.err());
+            value.ok().value());
     }
 };
 
