@@ -22,6 +22,7 @@ FetchContent_Declare(
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+include(GoogleTest)
 FetchContent_MakeAvailable(googletest)
 
 # Now simply link against gtest or gtest_main as needed. Eg
@@ -33,7 +34,9 @@ add_executable(tests
 )
 
 target_link_libraries(tests gtest_main)
-add_test(NAME split_tests COMMAND tests)
-add_test(NAME cache_tests COMMAND tests)
-add_test(NAME point_tests COMMAND tests)
-add_test(NAME result_tests COMMAND tests)
+gtest_discover_tests(tests)
+#add_test(NAME split_tests COMMAND tests)
+#add_test(NAME cache_tests COMMAND tests)
+#add_test(NAME point_tests COMMAND tests)
+#add_test(NAME result_tests COMMAND tests)
+#add_test(NAME read_tests COMMAND tests)

@@ -15,7 +15,13 @@
 #include <complex>
 #include <print>
 #include <expected>
+#include <map>
 #include <random>
+#include <ranges>
+#include <future>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
 
 #include "cache.h"
 #include "fileutils.h"
@@ -24,16 +30,17 @@
 #include "explicit_sized.h"
 #include "result.h"
 
+#include "Readable.h"
+#include "Writable.h"
+
 using namespace localstd;
+using namespace readwrite;
 
 using namespace std::literals;
+using namespace std::chrono;
+
+namespace fs = std::filesystem;
 
 int main() {
-    auto test = Result<int, std::string>{1}
-        .map(
-            [](const int) -> std::tuple<> {
-                return {};
-            });
-
-    std::println("{}", test);
+    std::println("Hi!");
 }

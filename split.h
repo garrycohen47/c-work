@@ -19,8 +19,11 @@ namespace localstd
     /// 	the input range and assigns the result to an output sequence
     /// @p unary_op must not alter its arguments
     template<class InputIt, class OutputIt, class UnaryOperation>
-    constexpr OutputIt
-    split(InputIt first, InputIt last, OutputIt out_first, UnaryOperation unary_op) {
+    constexpr auto split(
+        InputIt first,
+        const InputIt last,
+        OutputIt out_first,
+        UnaryOperation unary_op) -> OutputIt {
         auto begin = first;
         while (first != last) {
             if (unary_op(*first)) {

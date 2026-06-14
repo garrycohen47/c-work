@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <type_traits>
+#include <format>
 
 namespace localstd::detail {
 #if DEBUG_ENABLED == 1
@@ -15,7 +16,8 @@ namespace localstd::detail {
 
 namespace localstd {
     template<typename T>
-    struct explicit_sized {
+    class explicit_sized {
+    public:
         using value_type = std::remove_cvref_t<T>;
 
         constexpr explicit explicit_sized(
